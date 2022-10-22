@@ -9,8 +9,8 @@ class Ship:
 
         # load the ship image
         self.image = pygame.image.load("images/ship.png")
-        self.scaled_image = pygame.transform.scale(self.image, (40, 70))
-        self.rect = self.scaled_image.get_rect()
+        #self.scaled_image = pygame.transform.scale(self.image, (40, 70))
+        self.rect = self.image.get_rect()
 
         # put the ship at the bottom center
         self.rect.midbottom = self.screen_rect.midbottom
@@ -24,7 +24,7 @@ class Ship:
 
     def blitme(self):
         """draw the ship at its location"""
-        self.screen.blit(self.scaled_image, self.rect)
+        self.screen.blit(self.image, self.rect)
 
     def update(self):
         """update ship's position based on movement flag"""
