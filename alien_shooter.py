@@ -7,6 +7,8 @@ from ship import Ship
 from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
+from button import Button
+from scoreboard import Scoreboard
 
 class AlienShooter:
     def __init__(self):
@@ -25,7 +27,10 @@ class AlienShooter:
 
         pygame.display.set_caption("Alien Shooter: Shoot'em all")
 
+        # store game stats and create a scoreboard
         self.stats = GameStats(self)
+        self.scoreboard = Scoreboard(self)
+
         self.ship = Ship(self)
 
         # background color
@@ -35,6 +40,9 @@ class AlienShooter:
         self.aliens = pygame.sprite.Group()
 
         self._create_fleet()
+
+        # set the play button
+        self.play_button = Button(self, "Play")
 
 
     def _check_events(self):
@@ -46,6 +54,9 @@ class AlienShooter:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
 
     def _check_keydown_events(self, event):
         if event.key == pygame.K_RIGHT:
@@ -63,6 +74,28 @@ class AlienShooter:
             self.ship.moving_right = False
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = False
+
+    def _check_play_button(self, mouse_pos):
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.stats.game_active:
+            # reset game stats
+            self.settings.initialize_dynamic_settings()
+            self.stats.reset_stats()
+            self.stats.game_active = True
+            self.scoreboard.prep_score()
+            self.scoreboard.prep_level()
+            self.scoreboard.prep_ships()
+
+            # remove remaining aliens and bullets
+            self.aliens.empty()
+            self.bullets.empty()
+
+            # create new fleet and ship
+            self._create_fleet()
+            self.ship.center_ship()
+
+            # hide cursor
+            pygame.mouse.set_visible(False)
 
     def _create_fleet(self):
         """create fleet of aliens"""
@@ -108,6 +141,13 @@ class AlienShooter:
             bullet.draw_bullet()
         self.aliens.draw(self.screen)
 
+        # draw the scoreboard
+        self.scoreboard.show_score()
+
+        # draw the button
+        if not self.stats.game_active:
+            self.play_button.draw_button()
+
         # make the most recently drawn screen visible
         pygame.display.flip()
 
@@ -131,9 +171,21 @@ class AlienShooter:
     def _check_bullet_alien_collisions(self):
         # check if any bullet hit aliens
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
+
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.scoreboard.prep_score()
+            self.scoreboard.check_high_score()
+
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
+
+            # increase level
+            self.stats.level += 1
+            self.scoreboard.prep_level()
 
 
     def _check_aliens_bottom(self):
@@ -159,6 +211,7 @@ class AlienShooter:
         if self.stats.ships_left > 0:
             # decrement the ship left
             self.stats.ships_left -= 1
+            self.scoreboard.prep_ships()
 
             # remove remaining aliens and bullets
             self.aliens.empty()
@@ -172,6 +225,7 @@ class AlienShooter:
 
         else:
             self.stats.game_active = False
+            pygame.mouse.set_visible(True)
 
     def run(self):
         """The main loop for the game"""
