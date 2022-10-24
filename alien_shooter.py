@@ -27,6 +27,10 @@ class AlienShooter:
 
         pygame.display.set_caption("Alien Shooter: Shoot'em all")
 
+        self.bg_image = pygame.image.load("images/background.png").convert()
+        self.bg_rect = self.bg_image.get_rect()
+        #self.screen.blit(self.bg_image, self.bg_rect)
+
         # store game stats and create a scoreboard
         self.stats = GameStats(self)
         self.scoreboard = Scoreboard(self)
@@ -136,6 +140,7 @@ class AlienShooter:
     def _update_screen(self):
         # redraw the screen during each pass in the loop
         self.screen.fill(self.settings.bg_color)
+        self.screen.blit(self.bg_image, self.bg_rect)
         self.ship.blitme()
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
@@ -149,7 +154,7 @@ class AlienShooter:
             self.play_button.draw_button()
 
         # make the most recently drawn screen visible
-        pygame.display.flip()
+        pygame.display.update()
 
     def _fire_bullet(self):
         """create a new bullet and add it to the bullets group"""
@@ -208,7 +213,7 @@ class AlienShooter:
 
     def _ship_hit(self):
         """respon to the ship being hit by alien"""
-        if self.stats.ships_left > 0:
+        if self.stats.ships_left > 1:
             # decrement the ship left
             self.stats.ships_left -= 1
             self.scoreboard.prep_ships()
